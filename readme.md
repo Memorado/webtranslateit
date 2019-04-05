@@ -59,15 +59,16 @@ The reason is that the wti file is named in another way: `/usr/bin/wti.ruby2.1` 
 Now that the tool is installed, you’ll have to configure your project. Basically, `wti` is to be run on a project root directory, and looks for a `.wti` file containing your project information. The command `wti init` lets your create your `.wti` file.
 
 ``` bash
-$ wti init 55555abc1235555
+$ wti init proj_pvt_V8skdjsdDDA4
 # Initializing project
 
- Your project was successfully initialized.
+ The project Frontend was successfully initialized.
+
 You can now use `wti` to push and pull your language files.
 Check `wti --help` for help.
 ```
 
-`55555abc1235555` is the API token, which you can find in your project settings.
+`proj_pvt_V8skdjsdDDA4` is the API token, which you can find in your project settings.
 
 If you’d like to specify another path for your configuration file, you can use `wti init`. This command will ask you to enter your project API token and where to save the configuration file (by default it will create a `.wti` in your project root directory).
 
@@ -100,15 +101,21 @@ Execute `wti --help` to see the usage:
 Append `--help` for each command for more information. For instance:
 
     $ wti push --help
-    Push master language file(s)
+    wti push [filename] - Push master language file(s)
     [options] are:
-          --locale, -l <s>:   ISO code of locale(s) to push
-                 --all, -a:   Upload all files
-        --low-priority, -o:   WTI will process this file with a low priority
-               --merge, -m:   Force WTI to merge this file
-      --ignore-missing, -i:   Force WTI to not obsolete missing strings
-           --label, -b <s>:   Apply a label to the changes
-                --help, -h:   Show this message
+      -l, --locale=<s>        ISO code of locale(s) to push
+      -t, --target            Upload all target files
+      -f, --force             Force push (bypass conditional requests to WTI)
+      -o, --low-priority      WTI will process this file with a low priority
+      -m, --merge             Force WTI to merge this file
+      -i, --ignore-missing    Force WTI to not obsolete missing strings
+      -n, --minor             Minor Changes. When pushing a master file, prevents
+                              target translations to be flagged as `to_verify`.
+      -a, --label=<s>         Apply a label to the changes
+      -c, --config=<s>        Path to a configuration file (default: .wti)
+      --all                   DEPRECATED -- See `wti push --target` instead
+      -d, --debug             Display debug information
+      -h, --help              Show this message
 
 ## Sample Commands
 
@@ -150,6 +157,10 @@ Append `--help` for each command for more information. For instance:
     <td>Update all language files at once</td>
   </tr>
   <tr>
+    <td>wti push path/to/file.yml</td>
+    <td>Pushes the path/to/file.yml file</td>
+  </tr>
+  <tr>
     <td>wti pull</td>
     <td>Download target language files</td>
   </tr>
@@ -160,6 +171,14 @@ Append `--help` for each command for more information. For instance:
   <tr>
     <td>wti pull --all</td>
     <td>Download all language files, including source</td>
+  </tr>
+  <tr>
+    <td>wti pull path/to/files/*</td>
+    <td>Download all files in path/to/files</td>
+  </tr>
+  <tr>
+    <td>wti pull path/to/files/* -l fr</td>
+    <td>Download all fr files in path/to/files</td>
   </tr>
   <tr>
     <td>wti pull --force</td>
@@ -212,18 +231,49 @@ Since version 1.4.0 `wti` returns exit codes on failure. The exit code is `0` if
  config/locales/app/fr.yml                          | 29f8c9d..da39a3e  OK
  config/locales/defaults/fr.yml                     | aca123e..aca123e  Skipped
 Pulled 8 files at 7 files/sec, using 3 threads.
-~/code/webtranslateit.com[master]% echo $!
+
+~/code/webtranslateit.com[master]% echo $?
 0
+
 ~/code/webtranslateit.com[master]% wti pull
 # Pulling files on WebTranslateIt
  config/locales/translation_validator/en.yml        | e82e044..e82e044  Error
  config/locales/app/en.yml                          | f2ca86c..f2ca86c  Skipped
  config/locales/defaults/fr.yml                     | aca123e..aca123e  Skipped
 Pulled 3 files at 3 files/sec, using 3 threads.
-~/code/webtranslateit.com[master]% echo $!
+
+~/code/webtranslateit.com[master]% echo $?
 1
+```
+
+Since version 2.4.1 the `wti status` command also returns meaningful codes. It will exit with `0` if the project is 100% translated and proofread, `100` if the project is not 100% translated and `101` if the project is not 100% proofread. This could allow you to check if a project is 100% translated or completed before deploying a project.
+
+``` zsh
+~/Desktop/test% wti status
+# Gathering information on test ts
+fr: 40% translated, 40% completed.
+en: 90% translated, 0% completed.
+
+~/Desktop/test% echo $?
+100
+
+~/Desktop/test% wti status
+# Gathering information on test ts
+en: 100% translated, 0% completed.
+fr: 100% translated, 100% completed.
+
+~/Desktop/test% echo $?
+101
+
+~/Desktop/test% wti status
+# Gathering information on test ts
+en: 100% translated, 100% completed.
+fr: 100% translated, 100% completed.
+
+~/Desktop/test% echo $?   
+0
 ```
 
 # License
 
-Copyright (c) 2009-2015 Atelier Convivialité, released under the MIT License.
+Copyright (c) 2009-2018 Atelier Convivialité, released under the MIT License.

@@ -1,6 +1,56 @@
+## Version 2.4.8 / 2018-09-06
+
+* Update deprecated gem `Trollop` to `Optimist`.
+
+## Version 2.4.7 / 2018-03-28
+
+* Add an option to .wti file to silence SSL errors.
+
+## Version 2.4.6 / 2018-02-28
+
+* Fix SSL issue.
+
+## Version 2.4.5 / 2017-12-21
+
+* Fix issue pulling multiple files. #142
+
+## Version 2.4.4 / 2017-11-27
+
+* Fix issue on `wti status` command.
+
+## Version 2.4.3 / 2017-11-22
+
+* Clearer error message when no files to push. #136
+* New: ability to pull by file name and language. #133
+  Example: `wti pull config/locales/app/* -l en`
+* New: `wti pull [filepath]` now pulls files matching a
+  [glob](https://en.wikipedia.org/wiki/Glob_(programming)) match
+  on the files hosted on WebTranslateIt.com (instead of relying on
+  shell’s list of files which might not exist on the first pull). Close #137.
+  This shouldn’t change existing commands but allows typing something like:
+  `wti pull config/locales/*/en.yml` to download only the `en` files.
+* Fix: Report error messages when running commands such as:
+  - wti rmlocale xxx
+  - wti addlocale xxx
+  - wti status
+  #139
+
+## Version 2.4.2 / 2017-09-28
+
+* Fixed an issue where a file would not be created if its content was empty.
+
+## Version 2.4.1 / 2016-02-03
+
+* `wti status` now returns a status code when a project is not 100% translated or not 100% proofread. #127
+  Status codes are:
+  - 100 if not 100% translated,
+  - 101 if not 100% proofread,
+  - 0 if project is 100% translated and proofread.
+* `wti init` now returns a successful status code. #126
+
 ## Version 2.4.0 / 2015-08-10
 
-* Now returns correct exit codes. `0` if command successful, `1` if any error has occured.
+* Now returns correct exit codes. `0` if command successful, `1` if any error has occurred.
 * Limit the amount of retries to 3 on timeout.
 
 ## Version 2.3.4 / 2014-05-23

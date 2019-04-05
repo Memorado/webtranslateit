@@ -38,12 +38,14 @@ module WebTranslateIt
       # Selecting files to pull
       files = []
       fetch_locales_to_pull.each do |locale|
-        if parameters.any?
-          files = configuration.files.find_all{ |file| parameters.include?(file.file_path) }.sort{ |a,b| a.file_path <=> b.file_path }
-        else
-          files |= configuration.files.find_all{ |file| file.locale == locale }.sort{ |a,b| a.file_path <=> b.file_path }
-        end
+        files |= configuration.files.find_all{ |file| file.locale == locale }
       end
+      found_files = []
+      parameters.each do |parameter|
+        found_files += files.find_all{ |file| File.fnmatch(parameter, file.file_path) }
+      end
+      files = found_files if found_files.any?
+      files = files.uniq.sort{ |a,b| a.file_path <=> b.file_path }
       if files.size == 0
         puts "No files to pull."
       else
@@ -83,7 +85,7 @@ module WebTranslateIt
             files = configuration.files.find_all{ |file| file.locale == locale }.sort{|a,b| a.file_path <=> b.file_path}
           end
           if files.size == 0
-            puts "No files to push."
+            puts "Couldn't find any local files registered on WebTranslateIt to push."
           else
             files.each do |file|
               success = file.upload(http, command_options[:merge], command_options.ignore_missing, command_options.label, command_options.low_priority, command_options[:minor], command_options.force)
@@ -158,7 +160,7 @@ module WebTranslateIt
       parameters.each do |param|
         print StringUtil.success("Adding locale #{param.upcase}... ")
         WebTranslateIt::Connection.new(configuration.api_key) do
-          puts WebTranslateIt::Project.create_locale(param)
+          WebTranslateIt::Project.create_locale(param)
         end
         puts "Done."
       end
@@ -175,7 +177,7 @@ module WebTranslateIt
         if Util.ask_yes_no("Are you certain you want to delete the locale #{param.upcase}?\nThis will also delete its files and translations.", false)
           print StringUtil.success("Deleting locale #{param.upcase}... ")
           WebTranslateIt::Connection.new(configuration.api_key) do |http|
-            puts WebTranslateIt::Project.delete_locale(param)
+            WebTranslateIt::Project.delete_locale(param)
           end
           puts "Done."
         end
@@ -196,7 +198,7 @@ module WebTranslateIt
       project_info = project['project']
       if File.exists?(path) && !File.writable?(path)
         puts StringUtil.failure("Error: `#{path}` file is not writable.")
-        exit
+        exit 1
       end
       File.open(path, 'w'){ |file| file << generate_configuration(api_key, project_info) }
       puts ""
@@ -224,6 +226,7 @@ module WebTranslateIt
       end
       puts "You can now use `wti` to push and pull your language files."
       puts "Check `wti --help` for help."
+      return true
     end
     
     def match
@@ -247,11 +250,17 @@ module WebTranslateIt
     def status
       stats = YAML.load(Project.fetch_stats(configuration.api_key))
       stale = false
+      completely_translated = true
+      completely_proofread  = true
       stats.each do |locale, values|
         percent_translated = Util.calculate_percentage(values['count_strings_to_proofread'].to_i + values['count_strings_done'].to_i + values['count_strings_to_verify'].to_i, values['count_strings'].to_i)
         percent_completed  = Util.calculate_percentage(values['count_strings_done'].to_i, values['count_strings'].to_i)
+        completely_translated = false if percent_translated != 100
+        completely_proofread  = false if percent_completed  != 100
         puts "#{locale}: #{percent_translated}% translated, #{percent_completed}% completed."
       end
+      exit 100 if !completely_translated
+      exit 101 if !completely_proofread
       return true
     end
                 
@@ -334,6 +343,9 @@ api_key: #{api_key}
 #
 # before_push: "echo 'some unix command'"   # Command executed before pushing files
 # after_push:  "touch tmp/restart.txt"      # Command executed after pushing files
+
+# Silence SSL errors
+# silence_errors: true
 
 FILE
       return file

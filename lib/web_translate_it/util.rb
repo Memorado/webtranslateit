@@ -22,13 +22,13 @@ module WebTranslateIt
         if raise_exception
           raise "Error: #{MultiJson.load(response.body)['error']}"
         else
-          StringUtil.failure(MultiJson.load(response.body)['error'])
+          puts StringUtil.failure(MultiJson.load(response.body)['error'])
         end
       elsif response.code.to_i == 500
         if raise_exception
           raise "Error: Server temporarily unavailable (Error 500)."
         else
-          StringUtil.failure("Error: Server temporarily unavailable (Error 500).")
+          puts StringUtil.failure("Error: Server temporarily unavailable (Error 500).")
         end
       else
         return response.body if return_response
@@ -38,6 +38,12 @@ module WebTranslateIt
         return StringUtil.success("Not Modified") if response.code.to_i == 304
         return StringUtil.failure("Locked\n                                                    (another import in progress)") if response.code.to_i == 503
       end
+    end
+    
+    def self.add_fields(request)
+      request.add_field("X-Client-Name", "web_translate_it")
+      request.add_field("X-Client-Version", version)
+      request.add_field("Content-Type", "application/json")
     end
     
     ##
